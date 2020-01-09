@@ -2,26 +2,8 @@
   href="https://stackpath.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
   rel="stylesheet"
 />
-<style>
-  input {
-    width: 100%;
-    height: 35px;
-  }
 
-  #messages {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  #messages li {
-    padding: 5px 10px;
-  }
-
-  #messages li:nth-child(odd) {
-    background: #eee;
-  }
-</style>
+<link rel="stylesheet" href="./styles.css" />
 
 <div class="container">
   <div class="row">
@@ -47,33 +29,4 @@
 
 <script src="/socket.io/socket.io.js"></script>
 
-<script>
-  const socket = io("http://localhost:9000");
-  socket.on("connect", () => {
-    console.log(socket.id);
-  });
-  socket.on("messageFromServer", dataFromServer => {
-    console.log(dataFromServer);
-    socket.emit("messageToServer", { data: "Data from the client" });
-  });
-
-  document.querySelector("#message-form").addEventListener("submit", event => {
-    event.preventDefault();
-    let newMessage = document.querySelector("#user-message").value;
-    socket.emit("newMessageToServer", { text: newMessage });
-  });
-
-  socket.on("messageToClient", msg => {
-    let newMessage = msg.text;
-    document.querySelector("#messages").innerHTML += `<li>${newMessage}</li>`;
-  });
-
-  /* socket.on("ping", () => {
-    console.log("ping was received from the server");
-  });
-
-  socket.on("pong", latency => {
-    console.log(latency);
-    console.log("pong was sent to the server");
-  }); */
-</script>
+<script src="./scripts.js"></script>
