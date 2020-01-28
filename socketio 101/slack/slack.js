@@ -1,7 +1,10 @@
 const express = require("express");
 const socketio = require("socket.io");
-
 const app = express();
+
+let namespaces = require("./data/namespaces");
+
+//console.log(namespaces[0]);
 
 app.use(express.static(__dirname + "/public"));
 
@@ -10,17 +13,22 @@ const expressServer = app.listen(9000);
 const io = socketio(expressServer);
 
 io.on("connection", socket => {
-  socket.emit("messageFromServer", { data: "Welcome to the socketio server" });
-  socket.on("messageToServer", dataFromClient => {
-    console.log(dataFromClient);
+  // build an array to send back with image and endpoint for each ns
+  let nsData = namespaces.map(ns => {
+    return {
+      img: ns.img,
+      endpoint: ns.endpoint
+    };
   });
-  socket.join("level1");
-  socket
-    .to("level1")
-    .emit("joined", `${socket.id} says - "I have joined the level1 room`);
+  //console.log(nsData);
+  //send ns data back to client. We need to use socket, NOT io because we want it to go to just this client
+  socket.emit("nsList", nsData);
 });
 
-io.of("/admin").on("connection", socket => {
-  console.log("someone connected to the admin namespace");
-  io.of("/admin").emit("welcome", "welcome to admin channel");
+// loop through each namespace and listen for a connection
+namespaces.forEach(namespace => {
+  //console.log(namespace);
+  io.of(namespace.endpoint).on("connection", socket => {
+    console.log(`${socket.id} has joined ${namespace.endpoint}`);
+  });
 });
