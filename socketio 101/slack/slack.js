@@ -33,5 +33,29 @@ namespaces.forEach(namespace => {
     // a socket has connected to one of our chatgroup namespaces
     // send that ns group info back
     nsSocket.emit("nsRoomLoad", namespaces[0].rooms);
+    nsSocket.on("joinRoom", (roomToJoin, numberOfUsersCallback) => {
+      // deal with history once we have it
+      nsSocket.join(roomToJoin);
+      io.of("/wiki")
+        .in(roomToJoin)
+        .clients((error, clients) => {
+          console.log(clients.length);
+          numberOfUsersCallback(clients.length);
+        });
+    });
+    nsSocket.on("newMessageToServer", msg => {
+      const fullMsg = {
+        text: msg,
+        time: Date.now(),
+        username: "rbunch",
+        avatar: "https://via.placeholder.com/30"
+      };
+      console.log(msg);
+      console.log(nsSocket.rooms);
+      const roomTitle = Object.keys(nsSocket.rooms)[1];
+      io.of("/wiki")
+        .to(roomTitle)
+        .emit("messageToClients", fullMsg);
+    });
   });
 });
