@@ -40,7 +40,7 @@ function joinNs(endpoint) {
 }
 
 function buildHTML(msg) {
-  const convertedDate = new Date(msg.time).toLocaleDateString()
+  const convertedDate = new Date(msg.time).toLocaleDateString();
   const newHTML = `
   <li>
     <div class="user-image">
@@ -48,7 +48,7 @@ function buildHTML(msg) {
     </div>
     <div class="user-message">
       <div class="user-name-time">${msg.username} <span>${convertedDate}</span></div>
-      <div class="message-text">${msg.text.text}</div>
+      <div class="message-text">${msg.text}</div>
     </div>
   </li>
   `;

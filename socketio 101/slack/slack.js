@@ -36,16 +36,29 @@ namespaces.forEach(namespace => {
     nsSocket.on("joinRoom", (roomToJoin, numberOfUsersCallback) => {
       // deal with history once we have it
       nsSocket.join(roomToJoin);
-      io.of("/wiki")
+      /* io.of("/wiki")
         .in(roomToJoin)
         .clients((error, clients) => {
           console.log(clients.length);
           numberOfUsersCallback(clients.length);
+        }); */
+      const nsRoom = namespaces[0].rooms.find(room => {
+        return (room.roomTitle = roomToJoin);
+      });
+      nsSocket.emit("historyCatchUp", nsRoom.history);
+
+      io.of("wiki")
+        .in(roomToJoin)
+        .clients((error, clients) => {
+          console.log(clients.length);
+          io.of("wiki")
+            .in(roomToJoin)
+            .emit("updateMembers", clients.length);
         });
     });
     nsSocket.on("newMessageToServer", msg => {
       const fullMsg = {
-        text: msg,
+        text: msg.text,
         time: Date.now(),
         username: "rbunch",
         avatar: "https://via.placeholder.com/30"
@@ -53,6 +66,13 @@ namespaces.forEach(namespace => {
       console.log(msg);
       console.log(nsSocket.rooms);
       const roomTitle = Object.keys(nsSocket.rooms)[1];
+
+      // we need to find the room object for this room
+      const nsRoom = namespaces[0].rooms.find(room => {
+        return (room.roomTitle = roomTitle);
+      });
+      console.log(nsRoom);
+      nsRoom.addMessage(fullMsg);
       io.of("/wiki")
         .to(roomTitle)
         .emit("messageToClients", fullMsg);
