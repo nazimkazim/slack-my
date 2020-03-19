@@ -32,9 +32,12 @@ namespaces.forEach(namespace => {
     console.log(`${nsSocket.id} has joined ${namespace.endpoint}`);
     // a socket has connected to one of our chatgroup namespaces
     // send that ns group info back
-    nsSocket.emit("nsRoomLoad", namespaces[0].rooms);
+    nsSocket.emit("nsRoomLoad", namespace.rooms);
     nsSocket.on("joinRoom", (roomToJoin, numberOfUsersCallback) => {
       // deal with history once we have it
+      const roomToLeave = Object.keys(nsSocket.rooms)[1];
+      nsSocket.leave(roomToLeave);
+      updateUsersInRoom(namespace, roomToLeave)
       nsSocket.join(roomToJoin);
       /* io.of("/wiki")
         .in(roomToJoin)
@@ -42,19 +45,12 @@ namespaces.forEach(namespace => {
           console.log(clients.length);
           numberOfUsersCallback(clients.length);
         }); */
-      const nsRoom = namespaces[0].rooms.find(room => {
-        return (room.roomTitle = roomToJoin);
+      const nsRoom = namespace.rooms.find(room => {
+        return room.roomTitle === roomToJoin;
       });
-      nsSocket.emit("historyCatchUp", nsRoom.history);
 
-      io.of("wiki")
-        .in(roomToJoin)
-        .clients((error, clients) => {
-          console.log(clients.length);
-          io.of("wiki")
-            .in(roomToJoin)
-            .emit("updateMembers", clients.length);
-        });
+      nsSocket.emit("historyCatchUp", nsRoom.history);
+      updateUsersInRoom(namespace, roomToJoin)
     });
     nsSocket.on("newMessageToServer", msg => {
       const fullMsg = {
@@ -68,14 +64,25 @@ namespaces.forEach(namespace => {
       const roomTitle = Object.keys(nsSocket.rooms)[1];
 
       // we need to find the room object for this room
-      const nsRoom = namespaces[0].rooms.find(room => {
-        return (room.roomTitle = roomTitle);
+      const nsRoom = namespace.rooms.find(room => {
+        return room.roomTitle === roomTitle;
       });
       console.log(nsRoom);
       nsRoom.addMessage(fullMsg);
-      io.of("/wiki")
+      io.of(namespace.endpoint)
         .to(roomTitle)
         .emit("messageToClients", fullMsg);
     });
   });
 });
+
+function updateUsersInRoom(namespace, roomToJoin) {
+  io.of(namespace.endpoint)
+    .in(roomToJoin)
+    .clients((error, clients) => {
+      console.log(clients.length);
+      io.of(namespace.endpoint)
+        .in(roomToJoin)
+        .emit("updateMembers", clients.length);
+    });
+}

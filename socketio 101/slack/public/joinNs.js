@@ -1,23 +1,29 @@
 function joinNs(endpoint) {
+  if (nsSocket) {
+    nsSocket.close()
+    document.querySelector("#user-input").removeEventListener('submit', formSubmission)
+  }
   nsSocket = io(`http://localhost:9000${endpoint}`);
   nsSocket.on("nsRoomLoad", nsRooms => {
     console.log(nsRooms);
     let roomList = document.querySelector(".room-list");
     roomList.innerHTML = "";
-    let glyph = "";
-    if (nsRooms.privateRoom) {
-      glyph = "lock";
-    } else {
-      glyph = "globe";
-    }
+
     nsRooms.forEach(room => {
+      let glyph;
+      if (room.privateRoom) {
+        glyph = "lock";
+      } else {
+        glyph = "globe";
+      }
       roomList.innerHTML += `<li class="room"><span class="glyphicon glyphicon-${glyph}">${room.roomTitle}</span></li>`;
     });
     // add click listener to each room
     let roomNodes = document.getElementsByClassName("room");
     Array.from(roomNodes).forEach(elem => {
       elem.addEventListener("click", e => {
-        console.log("Someone clicked on", e.target.innerText);
+        //console.log("Someone clicked on", e.target.innerText);
+        joinRoom(e.target.innerText)
       });
     });
     const topRoom = document.querySelector(".room");
@@ -32,11 +38,13 @@ function joinNs(endpoint) {
     document.querySelector("#messages").innerHTML += newMsg;
   });
 
-  document.querySelector(".message-form").addEventListener("submit", event => {
+  document.querySelector(".message-form").addEventListener("submit",formSubmission);
+}
+
+function formSubmission(event) {
     event.preventDefault();
     let newMessage = document.querySelector("#user-message").value;
     nsSocket.emit("newMessageToServer", { text: newMessage });
-  });
 }
 
 function buildHTML(msg) {
